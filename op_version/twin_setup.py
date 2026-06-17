@@ -20,7 +20,7 @@ def change_ap_settings(interface_name):
 
     try:
         subprocess.run(["sudo","ip","link","set", interface_name, "down"],check=True)
-        subprocess.run(["sudo", "iw", interface_name,"set", "type", "managed"],check=True)
+        subprocess.run(["sudo", "iw", interface_name,"set", "type", "__ap"],check=True)
         subprocess.run(["sudo","ip","link","set", interface_name, "up"], check=True)             
         print(f"[+] {interface_name} is awake and locked in Managed Mode!")
         
@@ -112,11 +112,13 @@ def clear_firewall_rules(EV_INTERFACE):
 def create_hostapd_conf(interface_name, ap,config_path):
     ssid = ap['ssid']
     channel = ap['channel']
+    bssid = ap['bssid']
     config_content = f"""interface={interface_name}
 driver=nl80211
 ssid={ssid}
 hw_mode=g
 channel={channel}
+bssid={bssid}
 auth_algs=1
 wpa=0
 """

@@ -106,7 +106,7 @@ def scan_victims(interface_name, ap, scan_time):
     victims_list = list (victims_dic.values())
     print("---- Discovered victims ----")
     for index, victim in enumerate(victims_list, start=1):
-        print(f"[{index: >2}] SSID: {victim['ssid']} | Packets: {victim['packets']}")
+        print(f"[{index: >2}] BSSID: {victim['bssid']} | Packets: {victim['packets']}")
     while True:
         try:
             choice = int(input("\nSelect victim index to target: "))
@@ -118,7 +118,7 @@ def scan_victims(interface_name, ap, scan_time):
 
         except ValueError:
             print("Please enter a vaild number.")
-    print(f"[+] Victim selected: {chosen_victim['ssid']}")
+    print(f"[+] Victim selected: {chosen_victim['bssid']}")
     return chosen_victim
 
 
@@ -215,7 +215,7 @@ def filter_victims(packet, bssid):
             if victim_mac not in victims_dic:
     # Keeping track of the amount of traffic for each victim
                 victims_dic[victim_mac] = {
-                    "ssid" : victim_mac,
+                    "bssid" : victim_mac,
                     "packets" : 0
                 }
             victims_dic[victim_mac]['packets']+= 1

