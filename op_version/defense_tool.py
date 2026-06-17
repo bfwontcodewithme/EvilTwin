@@ -10,11 +10,11 @@ from scapy.all import sniff, Dot11, Dot11Beacon, Dot11Elt, Dot11Disas, RadioTap,
             scan_networks
             filter networks
         2. large amount of disas packets sent in general(?) or to one target
-            scan traffic and filter disas packets
+            scan traffic and filter disas  / disauth packets
 
 """
-INTERFACE = "wlxe84e06aed7c3"
-
+INTERFACE = "wlxc83a35c2fcb0"
+aps_dict = {}
 stop_chopper = threading.Event()
 
 def set_monitor_mode(interface_name):
@@ -46,18 +46,46 @@ def channel_hopper(interface_name):
         except subprocess.CalledProcessError as e:   # CHECK if more error may happen
             print(f"[!] Channel hop error to {current_channel}: {e}")
 
-def filter_packets():
+def filter_packets(packet):
+    # check if beacon
+    if packet.haslayer(Dot11Beacon):
+        bssid = packet[Dot11].addr3
 
-    pass
+        if bssid not in aps_dict:
+            ssid = "<Hidden SSID>"
+            channel = "Unknown"
+
+            if packet.haslayer(Dot11Elt):
+    # Ignores error if AP is broadcasting differently to prevent crashing
+                elt = packet[Dot11Elt]
+                if elt.ID ==0:
+                    if elt.len != 0 and not all(byte == 0 for byte in elt.info):
+                        ssid=elt.info.decode('utf-8', errors='ignore')
+
+                current_layer = packet[Dot11Elt]
+                while isinstance(current_layer, Dot11Elt):
+                    # ID 3 is DS parameter
+                    if current_layer.ID == 3:
+                        channel = current_layer.info[0]
+
+                current_layer = current_layer.payload
+
+                aps_dict[bssid] = {
+                    "bssid" : bssid,
+                    "ssid" : ssid,
+                    "channel" : channel,
+                }
+
 
 def scan_ap(interface_name):
     hopper_thread = threading.Thread(target=channel_hopper, args=(interface_name,), daemon=True)
     hopper_thread.start()
-    sniff(iface=interface_name, prn=, store=False, timeout =10)
+    sniff(iface=interface_name, prn=filter_packets, store=False, timeout =10)
     
     stop_chopper.set()
     hopper_thread.join()
     # Sniffing completed
+    
     pass
 
 def main():
