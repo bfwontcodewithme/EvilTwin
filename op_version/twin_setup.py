@@ -120,7 +120,6 @@ hw_mode=g
 channel={channel}
 bssid={bssid}
 auth_algs=1
-wpa=0
 """
     with open(config_path, "w") as f:
         f.write(config_content)
