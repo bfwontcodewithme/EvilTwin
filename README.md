@@ -1,5 +1,8 @@
 
 Platform DragonOS + requirements.txt
+- vr1 is basic not organized
+- op_version is structured and based on vr1
+
 ## Attack tool
 Running evil twin attack.
 - Scanning for nearby networks for a minute.
