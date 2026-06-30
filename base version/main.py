@@ -42,6 +42,7 @@ import time
 import threading
 from scapy.all import sniff, Dot11, Dot11Beacon, Dot11Elt, Dot11Disas, RadioTap, sendp
 import setup_adapters
+import app
 
 # Interfaces
 EV_INTERFACE = "wlxe84e06aed7c3"
@@ -399,7 +400,7 @@ def main():
         injection_thread.start()
         
         dnsmasq_proc = setup_network()
-        #app.run(host='0.0.0.0', port=80)
+        app.run(host='0.0.0.0', port=80)
         try:
             print("waiting ")
             while True:
@@ -412,10 +413,24 @@ def main():
         
     finally:
         # Clean ups
-        dnsmasq_proc.terminate()
-        dnsmasq_proc.wait()
-        hostapd_proc.terminate()
-        hostapd_proc.wait()
+        if dnsmasq_proc is not None:
+            try:
+                dnsmasq_proc.terminate()
+                dnsmasq_proc.wait(timeout=2)
+            except Exception as e:
+                print(f"Error stopping dnsmasq: {e}")
+        else:
+            print("dnsmasq_proc was never started (it is None).")
+
+        # Do the same for hostapd
+        if hostapd_proc is not None:
+            try:
+                hostapd_proc.terminate()
+                hostapd_proc.wait(timeout=2)
+            except Exception as e:
+                print(f"Error stopping hostapd: {e}")
+        else:
+            print("hostapd_proc was never started (it is None).")
         print("[*] Restoring normal network services...")
         subprocess.run(["sudo", "systemctl", "start", "NetworkManager"])
         

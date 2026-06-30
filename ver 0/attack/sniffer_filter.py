@@ -131,6 +131,8 @@ def filter_network(packet):
             ssid = "<Hidden SSID>"
             channel = "Unknown"
             security = "OPEN"
+            rates = "Unknown"
+            esrates = "Unknown"
             
             if packet.haslayer(Dot11Elt):
     # Ignores error if AP is broadcasting differently to prevent crashing
@@ -142,8 +144,11 @@ def filter_network(packet):
     # parse Information Elements        
                 current_layer = packet[Dot11Elt]
                 while isinstance(current_layer, Dot11Elt):
+                    # Supported rates - for probe response
+                    if current_layer.ID == 1:
+                        rates = current_layer.info
                     # ID 3 is DS parameter
-                    if current_layer.ID == 3:
+                    elif current_layer.ID == 3:
                         channel = current_layer.info[0]
                     # ID 48 is RSN (WPA2 /WPA3)
                     elif current_layer.ID == 48:
@@ -162,6 +167,8 @@ def filter_network(packet):
                     elif current_layer.ID == 221 and current_layer.info.startswith(b"\x00\x50\xf2\x01"):
                         if security not in ["WPA2", "WPA3", "WPA3/WPA2-Transition"]:
                             security = "WPA"
+                    elif current_layer.ID == 50:
+                        esrates = current_layer.info
                 
                     current_layer = current_layer.payload
                     # check for WEP if not have anything else
@@ -174,7 +181,9 @@ def filter_network(packet):
                     "bssid" : bssid,
                     "ssid" : ssid,
                     "channel" : channel,
-                    "security" : security
+                    "security" : security,
+                    "rates" : rates,
+                    "esrates" : esrates
                 }
     
 def filter_victims(packet, bssid):
@@ -189,7 +198,11 @@ def filter_victims(packet, bssid):
         return
     
     #only for management and control type , type 0 subtypes:  8(beacon) 5(probe response), 11(authentication)    
-    if dot.type not in [0,2] or (dot.type == 0 and dot.subtype in [5,8,11]):
+    if dot.type == 2:
+        pass 
+    elif (dot.type == 0 and dot.subtype in [5,8,11]):
+        pass
+    else:
         return
     
     victim_mac = None
@@ -211,7 +224,7 @@ def filter_victims(packet, bssid):
     
     if victim_mac:
     # Drop if broadcast (ff:ff....) ot IPv6 multicast(33:33))
-        if victim_mac != "ff:ff:ff:ff:ff:ff" and not victim_mac.startswith("33:33"):
+        if (victim_mac != "ff:ff:ff:ff:ff:ff" and not victim_mac.startswith("33:33") and not victim_mac.startswith("01:00:5e")):
             if victim_mac not in victims_dic:
     # Keeping track of the amount of traffic for each victim
                 victims_dic[victim_mac] = {
@@ -219,5 +232,3 @@ def filter_victims(packet, bssid):
                     "packets" : 0
                 }
             victims_dic[victim_mac]['packets']+= 1
-
-
