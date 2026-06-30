@@ -22,7 +22,7 @@ def interface_select(job_name="Sniffing", exclude=None):
         print("[-] No active network adapters found.")
         return None
 
-    print("\n=== Select Adapter for: {job_name} ===")
+    print(f"\n=== Select Adapter for: {job_name} ===")
     for idx, iface in enumerate(valid_ifaces):
         ip_display = iface.ip if iface.ip else "No IP Assigned"
         print(f"[{idx}] Name: {iface.name} | Description: {iface.description} | IP: {ip_display}")  
@@ -43,4 +43,4 @@ def interface_select(job_name="Sniffing", exclude=None):
 
 
 if __name__ == "__main__":
-    interface_select()
+    interface_select(job_name="Sniffing", exclude=None)

