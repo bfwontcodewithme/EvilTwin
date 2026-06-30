@@ -1,5 +1,6 @@
 import subprocess
 from flask import Flask, request, redirect
+import logging
 
 app = Flask(__name__)
 
@@ -150,9 +151,9 @@ def run_flask_server(interface_name):
     """Function to start the Flask application. 
     This blocks, so it must be run inside a thread."""
     # Use 'werkzeug' logging tweaks if you want to suppress standard request spam
-    #import logging
-    #log = logging.getLogger('werkzeug')
-    #log.setLevel(logging.ERROR) 
+
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR) 
     """Function to start the Flask application inside a thread."""
     
     # Save the interface to Flask's internal configuration dictionary

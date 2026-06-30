@@ -172,7 +172,7 @@ def create_evil_ap(INTERFACE, ap):
         sys.exit(1)   
 
 
-#function for isolating variables in my code
+#functions for isolating variables in my code
 def setup_network(EV_INTERFACE):
     print("[*] Configuring firewall rules...")
     print("[*] Stopping existing dnsmasq..")

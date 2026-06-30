@@ -68,7 +68,8 @@ def main():
 
         
         victim = scan_victims(EV_INTERFACE, target_ap, 30)
-
+        if victim:
+            print("Exiting program")
 
         hostapd_proc = create_evil_ap(EV_INTERFACE,target_ap) #WORKS 4 SURE
 

@@ -1,4 +1,4 @@
-from scapy.all import conf, sniff # or whatever scapy functions you need
+from scapy.all import conf
 
 def interface_select(job_name="Sniffing", exclude=None):
     # Fetch all interfaces recognized by Scapy
@@ -43,4 +43,4 @@ def interface_select(job_name="Sniffing", exclude=None):
 
 
 if __name__ == "__main__":
-    interface_select(job_name="Sniffing", exclude=None)
+    interface_select()

