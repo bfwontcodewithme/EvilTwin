@@ -57,7 +57,7 @@ def main():
             INJECT_INTERFACE = interface_select(job_name="Injector- send disas/dieauth packets", exclude=EV_INTERFACE)
         set_monitor_mode(EV_INTERFACE)
         while not target_ap:
-            target_ap = scan_networks(EV_INTERFACE,20)
+            target_ap = scan_networks(EV_INTERFACE,60)
             if not target_ap:
                 choice = input("[!] Scan again (Y) or exit program (N)?: ").strip().upper()
                 if choice == "N":
@@ -67,7 +67,7 @@ def main():
                 print("[*] Scanning again ..")
 
         
-        victim = scan_victims(EV_INTERFACE, target_ap, 30)
+        victim = scan_victims(EV_INTERFACE, target_ap, 60)
         if not victim:
             print("Exiting program")
             sys.exit(1)
