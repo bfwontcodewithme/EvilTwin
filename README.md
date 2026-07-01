@@ -1,12 +1,12 @@
 
-Platform DragonOS + requirements.txt  
-v0 contains:
+# Evil Twin Attack & Defense Tools
+### v0 contains:
 - source code files
 - requirments txt.
 - hostapd & dnsmasq examples
   
-poc contains:
-- 2 videos demonstrations
+### poc contains:
+- **2 videos demonstrations**
 - pcpng file of traffic during the attack, not sliced
 
   
@@ -31,15 +31,6 @@ Gets a networks name set on their channel and monitor:
 - The sequence number of packets, alerts when there are jumps backwards and when jumped forward too much to be usual.  
 - Alerting if found flood of disasocciation or deauthentication packets involving with the suspect network. 
 
-## Project Demonstrations
-Here videos demonstrations  for the attack tool.  
-This clip demonstrates the tool in the attacker workstation  
-
-<video src="https://github.com/bfwontcodewithme/EvilTwin/blob/main/poc/poc_attack_host.mp4?raw=true" width="100%" controls></video>
-This clip demonstrates the tool in the victim phone  
-
-<video src="https://github.com/bfwontcodewithme/EvilTwin/blob/main/poc/poc_victim_phone.mp4?raw=true" width="100%" controls></video>
-
 
 ## Known Issues & Limitations
 This section tracks current behavior quirks and active development priorities:
@@ -50,6 +41,7 @@ This section tracks current behavior quirks and active development priorities:
   
 ## Supported Devices & Environment
 The tool has been physically tested and verified on the following hardware:
+* **DragonOS**
 * **Lenovo ThinkPad E14** (Host System)
 * **OnePlus 12R** (Target)
 
