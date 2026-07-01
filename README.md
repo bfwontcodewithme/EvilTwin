@@ -34,10 +34,9 @@ Gets a networks name set on their channel and monitor:
 ## Project Demonstrations
 Here videos demonstrations  for the attack tool.  
 This clip demonstrates the tool in the attacker workstation  
-<video src="poc/poc_attack_host.mp4" width="100%" controls></video>
- 
+<video src="https://github.com/bfwontcodewithme/EvilTwin/blob/main/poc/poc_attack_host.mp4" width="100%" controls></video>
 This clip demonstrates the tool in the victim phone  
-<video src="poc/poc_victim_phone.mp4" width="100%" controls></video>
+<video src="https://github.com/bfwontcodewithme/EvilTwin/blob/main/poc/poc_victim_phone.mp4" width="100%" controls></video>
 
 
 ## Known Issues & Limitations
